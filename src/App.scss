@@ -141,6 +141,30 @@ body {
             margin-top: 4vh;
             font-size: 16px;
         }
+
+        .upload-section {
+            margin: 10vh 0 0 0;
+            .file-input{
+                padding: 10px 20px;
+                border: 2px solid #8d91eb;
+                background-color: #ffffffb8;
+                border-radius: 7.5px;
+                outline: none;
+                margin-bottom: 5vh;
+                width: 45.75vw;
+                cursor: pointer;
+            }
+          }
+          
+          .uploaded-preview {
+            max-width: 300px;
+            margin: 1rem auto;
+          img {
+            width: 20vw;
+            height: auto;
+            border-radius: 6px;
+          }
+        }
     }
     .generate-post-btn{
         background-color: #a8acffd5;

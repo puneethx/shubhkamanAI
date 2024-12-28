@@ -17,6 +17,7 @@ const App = () => {
   const [selectedTemplateImage, setSelectedTemplateImage] = useState('');
   const [userQuote, setUserQuote] = useState('');
   const [finalImage, setFinalImage] = useState(null);
+  const [uploadedImage, setUploadedImage] = useState(null);
 
   // Image sets based on time of day
   const imageSets = {
@@ -46,6 +47,32 @@ const App = () => {
   useEffect(() => {
     setSelectedTemplateImage(imageSets[timeOfDay][0]);
   }, [timeOfDay]);
+
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Check file type
+      const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+      if (!validImageTypes.includes(file.type)) {
+        alert('Please upload a valid image file (JPEG, PNG, GIF, WEBP, or SVG)');
+        return;
+      }
+
+      // Check file size (limit to 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        alert('File size should be less than 5MB');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setUploadedImage(e.target.result);
+        setSelectedTemplateImage(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleGeneratePost = () => {
     setFinalImage({
@@ -127,6 +154,16 @@ const App = () => {
             />
             Template images
           </label>
+          <label className={`radio-label ${imageSource === 'upload' ? 'selected' : ''}`}>
+            <input
+              type="radio"
+              name="imageSource"
+              value="upload"
+              checked={imageSource === 'upload'}
+              onChange={(e) => setImageSource(e.target.value)}
+            />
+            Upload image
+          </label>
           <label className={`radio-label ${imageSource === 'ai' ? 'selected' : ''}`}>
             <input
               type="radio"
@@ -138,6 +175,22 @@ const App = () => {
             Generate image by AI
           </label>
         </div>
+        
+        {imageSource === 'upload' && (
+          <div className="upload-section">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="file-input"
+            />
+            {uploadedImage && (
+              <div className="uploaded-preview">
+                <img src={uploadedImage} alt="Uploaded preview" />
+              </div>
+            )}
+          </div>
+        )}
 
         {imageSource === 'ai' && (
           <div className="input-group">
