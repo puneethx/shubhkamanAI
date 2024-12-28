@@ -107,7 +107,7 @@ body {
         }
         .template-images{
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(16vw, 1fr));
             margin-top: 5vh;
             gap: 1vw;
             .template-image {
@@ -170,7 +170,9 @@ body {
             width: 100%;
             min-width: 50vw;
             img{
-                width: 100%;
+                width: 50vw;
+                object-fit: contain;
+                height: 100%;
                 border-radius: 7.5px;
             }
             .post-quote{
