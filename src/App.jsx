@@ -11,7 +11,7 @@ const App = () => {
   // State variables
   const [timeOfDay, setTimeOfDay] = useState('morning');
   const [imageSource, setImageSource] = useState('template');
-  const [textSource, setTextSource] = useState('ai');
+  const [textSource, setTextSource] = useState('own');
   const [aiImagePrompt, setAiImagePrompt] = useState('');
   const [aiTextPrompt, setAiTextPrompt] = useState('');
   const [selectedTemplateImage, setSelectedTemplateImage] = useState('');
@@ -43,9 +43,8 @@ const App = () => {
     ]
   };
 
-  // Reset selected template image when time of day changes
   useEffect(() => {
-    setSelectedTemplateImage('');
+    setSelectedTemplateImage(imageSets[timeOfDay][0]);
   }, [timeOfDay]);
 
   const handleGeneratePost = () => {
@@ -82,7 +81,7 @@ const App = () => {
       <div className="section">
         <h2>Select Greeting Type</h2>
         <div className="radio-group">
-          <label className="radio-label">
+          <label className={`radio-label ${timeOfDay === 'morning' ? 'selected' : ''}`}>
             <input
               type="radio"
               name="timeOfDay"
@@ -92,7 +91,7 @@ const App = () => {
             />
             Morning
           </label>
-          <label className="radio-label">
+          <label className={`radio-label ${timeOfDay === 'night' ? 'selected' : ''}`}>
             <input
               type="radio"
               name="timeOfDay"
@@ -102,7 +101,7 @@ const App = () => {
             />
             Night
           </label>
-          <label className="radio-label">
+          <label className={`radio-label ${timeOfDay === 'congratulations' ? 'selected' : ''}`}>
             <input
               type="radio"
               name="timeOfDay"
@@ -118,17 +117,7 @@ const App = () => {
       <div className="section">
         <h2>Select Background Image Source</h2>
         <div className="radio-group">
-          <label className="radio-label">
-            <input
-              type="radio"
-              name="imageSource"
-              value="ai"
-              checked={imageSource === 'ai'}
-              onChange={(e) => setImageSource(e.target.value)}
-            />
-            Generate image by AI
-          </label>
-          <label className="radio-label">
+          <label className={`radio-label ${imageSource === 'template' ? 'selected' : ''}`}>
             <input
               type="radio"
               name="imageSource"
@@ -137,6 +126,16 @@ const App = () => {
               onChange={(e) => setImageSource(e.target.value)}
             />
             Template images
+          </label>
+          <label className={`radio-label ${imageSource === 'ai' ? 'selected' : ''}`}>
+            <input
+              type="radio"
+              name="imageSource"
+              value="ai"
+              checked={imageSource === 'ai'}
+              onChange={(e) => setImageSource(e.target.value)}
+            />
+            Generate image by AI
           </label>
         </div>
 
@@ -156,7 +155,7 @@ const App = () => {
         {imageSource === 'template' && (
           <div className="template-images">
             {imageSets[timeOfDay].map((img, index) => (
-              <div 
+              <div
                 key={index}
                 className={`template-image ${selectedTemplateImage === img ? 'selected' : ''}`}
                 onClick={() => setSelectedTemplateImage(img)}
@@ -171,7 +170,7 @@ const App = () => {
       <div className="section">
         <h2>Select Quote Source</h2>
         <div className="radio-group">
-          <label className="radio-label">
+          <label className={`radio-label ${textSource === 'own' ? 'selected' : ''}`}>
             <input
               type="radio"
               name="textSource"
@@ -181,7 +180,7 @@ const App = () => {
             />
             Write by own
           </label>
-          <label className="radio-label">
+          <label className={`radio-label ${textSource === 'ai' ? 'selected' : ''}`}>
             <input
               type="radio"
               name="textSource"
@@ -215,7 +214,7 @@ const App = () => {
           className="quote-input"
         />
       </div>
-      
+
       <button className="generate-post-btn" onClick={handleGeneratePost}>
         Generate the Post
       </button>
