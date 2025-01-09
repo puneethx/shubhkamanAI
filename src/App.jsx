@@ -8,7 +8,6 @@ import Sun4 from "./assets/sun4.jpg";
 import Sun5 from "./assets/sun5.jpg";
 
 const App = () => {
-  // State variables
   const [timeOfDay, setTimeOfDay] = useState('morning');
   const [imageSource, setImageSource] = useState('template');
   const [textSource, setTextSource] = useState('own');
@@ -18,48 +17,111 @@ const App = () => {
   const [userQuote, setUserQuote] = useState('');
   const [finalImage, setFinalImage] = useState(null);
   const [uploadedImage, setUploadedImage] = useState(null);
+  const [isGeneratingText, setIsGeneratingText] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [generatedImages, setGeneratedImages] = useState([]);
+  const [imageError, setImageError] = useState(null);
 
-  // Image sets based on time of day
   const imageSets = {
-    morning: [
-      Sun1,
-      Sun2,
-      Sun3,
-      Sun4,
-      Sun5
-    ],
-    night: [
-      Sun5,
-      Sun4,
-      Sun3,
-      Sun2,
-      Sun1
-    ],
-    congratulations: [
-      Sun1,
-      Sun2,
-      Sun3,
-      Sun4,
-      Sun5
-    ]
+    morning: [Sun1, Sun2, Sun3, Sun4, Sun5],
+    night: [Sun5, Sun4, Sun3, Sun2, Sun1],
+    congratulations: [Sun1, Sun2, Sun3, Sun4, Sun5]
   };
 
   useEffect(() => {
     setSelectedTemplateImage(imageSets[timeOfDay][0]);
   }, [timeOfDay]);
 
+  const generateAIImage = async () => {
+    if (!aiImagePrompt || isGeneratingImage) return;
+
+    setIsGeneratingImage(true);
+    setImageError(null);
+
+    try {
+      const imagePromises = Array(1).fill().map(async () => {
+        const response = await fetch(
+          "https://api.fireworks.ai/inference/v1/workflows/accounts/fireworks/models/flux-1-schnell-fp8/text_to_image",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "image/jpeg",
+              "Authorization": "Bearer fw_3ZfFuA6ePsyqPv68TW1gRvCj",
+            },
+            body: JSON.stringify({ prompt: aiImagePrompt }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to generate image: ${response.statusText}`);
+        }
+
+        const blob = await response.blob();
+        return URL.createObjectURL(blob);
+      });
+
+      const newGeneratedImages = await Promise.all(imagePromises);
+      setGeneratedImages(newGeneratedImages);
+      setSelectedTemplateImage(newGeneratedImages[0]);
+    } catch (error) {
+      console.error('Error generating image:', error);
+      setImageError('Failed to generate image. Please try again.');
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
+  const generateAIText = async () => {
+    if (!aiTextPrompt || isGeneratingText) return;
+
+    setIsGeneratingText(true);
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer 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',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: "user",
+              content: `Write a good morning message phrase under 15 words on ${aiTextPrompt} and just respond with the phrase.`
+            }
+          ],
+          model: "llama-3.1-8b-instant"
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate text');
+      }
+
+      const data = await response.json();
+      const generatedText = data.choices[0].message.content
+        .trim()
+        .replace(/^["'](.*)["']$/, '$1');
+
+      setUserQuote(generatedText);
+    } catch (error) {
+      console.error('Error generating text:', error);
+      alert('Failed to generate text. Please try again.');
+    } finally {
+      setIsGeneratingText(false);
+    }
+  };
+
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
-      // Check file type
       const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
       if (!validImageTypes.includes(file.type)) {
         alert('Please upload a valid image file (JPEG, PNG, GIF, WEBP, or SVG)');
         return;
       }
 
-      // Check file size (limit to 5MB)
-      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      const maxSize = 5 * 1024 * 1024;
       if (file.size > maxSize) {
         alert('File size should be less than 5MB');
         return;
@@ -175,7 +237,7 @@ const App = () => {
             Generate image by AI
           </label>
         </div>
-        
+
         {imageSource === 'upload' && (
           <div className="upload-section">
             <input
@@ -193,15 +255,37 @@ const App = () => {
         )}
 
         {imageSource === 'ai' && (
-          <div className="input-group">
-            <input
-              type="text"
-              placeholder="Describe the image you want..."
-              value={aiImagePrompt}
-              onChange={(e) => setAiImagePrompt(e.target.value)}
-              className="text-input"
-            />
-            <button className="generate-btn">Generate</button>
+          <div className="ai-image-section">
+            <div className="input-group">
+              <input
+                type="text"
+                placeholder="Describe the image you want..."
+                value={aiImagePrompt}
+                onChange={(e) => setAiImagePrompt(e.target.value)}
+                className="text-input"
+              />
+              <button
+                className="generate-btn"
+                onClick={generateAIImage}
+                disabled={isGeneratingImage}
+              >
+                {isGeneratingImage ? 'Generating...' : 'Generate'}
+              </button>
+            </div>
+            {imageError && <p className="error-message">{imageError}</p>}
+            {generatedImages.length > 0 && (
+              <div className="template-images">
+                {generatedImages.map((img, index) => (
+                  <div
+                    key={index}
+                    className={`template-image ${selectedTemplateImage === img ? 'selected' : ''}`}
+                    onClick={() => setSelectedTemplateImage(img)}
+                  >
+                    <img src={img} alt={`AI Generated ${index + 1}`} />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -254,7 +338,13 @@ const App = () => {
               onChange={(e) => setAiTextPrompt(e.target.value)}
               className="text-input"
             />
-            <button className="generate-btn">Generate</button>
+            <button
+              className="generate-btn"
+              onClick={generateAIText}
+              disabled={isGeneratingText}
+            >
+              {isGeneratingText ? 'Generating...' : 'Generate'}
+            </button>
           </div>
         )}
       </div>
